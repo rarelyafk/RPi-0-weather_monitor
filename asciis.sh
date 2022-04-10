@@ -6,32 +6,33 @@ LG='\e[38;5;226m'
 Y='\e[38;5;226m'
 R='\e[0m'
 
+center_txt() { printf '%*s\n' "$(( (34 + "${#1}") / 2))" "$1"; }
+# remove escape characters to calculate true length of string
+
 # 13 cols
 overcast() {
-  printf '%b' "$DG"
+  printf '%b\n' "$DG"
   printf '%s\n' "      .--.    "
   printf '%s\n' "   .-(    ).  "
   printf '%s\n' "  (___.__)__) "
   printf '%b' "$R"
 }
 
-sunny() {
-  printf '%b' "$Y"
-  printf '%s\n' "   \   /      "
-  printf '%s\n' "    .-.       "
-  printf '%s\n' " ― (   ) ―    "
-  printf '%s\n' "    \`-’     "
-  printf '%s\n' "   /   \      "
-  printf '%b' "$R"
+Sunny() {
+  printf '%b%s%b\n' "$Y" "  \   /   " "$R"
+  printf '%b%s%b\n' "$Y" "   .-.    " "$R"
+  printf '%b%s%b\n' "$Y" "― (   ) ― " "$R"
+  printf '%b%s%b\n' "$Y" "   \`-’   " "$R"
+  printf '%b%s%b\n' "$Y" "  /   \   " "$R"
 }
 
 partly_cloudy() {
-  printf '%b%s%b\n'     "$Y" "   \  /" "$R"
-  printf '%b%s%b%s%b\n' "$Y" " _ /\"\"" "$MG" ".-.    " "$R"
-  printf '%b%s%b%s%b\n' "$Y" "   \_" "$MG" "(   ).  " "$R"
-  printf '%b%s%b%s%b\n' "$Y" "   /" "$MG" "(___(__) " "$R"
+  printf '%b%s%b\n'     "$Y" "   \  /                    "  "$R"
+  printf '%b%s%b%s%b\n' "$Y" " _ /\"\"" "$MG"  ".-.      "  "$R"
+  printf '%b%s%b%s%b\n' "$Y" "   \_"    "$MG" "(   ).    "  "$R"
+  printf '%b%s%b%s%b\n' "$Y" "   /"     "$MG" "(___(__)   " "$R"
 }
 
-sunny
+"$1"
 # overcast
 #partly_cloudy
