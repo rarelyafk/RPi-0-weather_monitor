@@ -39,6 +39,8 @@ while :; do
   [[ "$temp" = "$feel" ]] && { temp=''; tempN=''; } || temp="${temp:1}"
   [[ "$rain" = "0.0mm" ]] && { rain=''; rainN=''; } || rain="${rain}/3hrs"
 
+  # if time < dawn OR > dusk, don't display ascii
+
   if [[ "$feel" -ge 70 ]] && [[ "$feel" -le 80 ]]; then
     feel="$(printf '%b%s%b' "$grn" "$feel" "$R")"
   elif [[ "$feel" -gt 80 ]]; then
