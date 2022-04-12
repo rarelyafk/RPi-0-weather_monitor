@@ -7,6 +7,13 @@ printf '\e[?7l'
 # hide cursor
 printf '\e[?25l'
 
+# colors
+yel='\e[33m'
+red='\e[31m'
+blu='\e[34m'
+grn='\e[32m'
+R='\e[0m'
+
 center_txt() { printf '%*s\n' "$(( (34 + "${#1}") / 2))" "$1"; }
 
 # infinite loop shorthand
@@ -25,20 +32,28 @@ while :; do
   done
   unset vals key val
 
+  feelN='feel'
+  tempN='temp'
+  windN='wind'
+  rainN='rain'
+  [[ "$temp" = "$feel" ]] && { temp=''; tempN=''; } || temp="${temp:1}"
+  [[ "$rain" = "0.0mm" ]] && { rain=''; rainN=''; } || rain="${rain}/3hrs"
 
-  [[ "$temp" = "$feel" ]] && temp='' || temp="${temp:1}"
-  [[ "$rain" = "0.0mm" ]] && rain='' || rain="${rain}/3hrs"
-
-  # if [[ "$feel" -ge 70 ]] && [[ "$feel" -le 80 ]]; then
-  # elif [[ "$feel" -gt 80 ]]; then
-  # elif [[ "$feel" -lt 70 ]]; then
-  # fi
-  # if [[ "$wind" -le 5 ]]; then
-  # elif [[ "$wind" -gt 5 ]]; then
-  # elif [[ "$wind" -gt 10 ]]; then
-  # elif [[ "$wind" -gt 15 ]]; then
-  # elif [[ "$wind" -gt 20 ]]; then
-  # fi
+  if [[ "$feel" -ge 70 ]] && [[ "$feel" -le 80 ]]; then
+    feel="$(printf '%b%s%b' "$grn" "$feel" "$R")"
+  elif [[ "$feel" -gt 80 ]]; then
+    feel="$(printf '%b%s%b' "$red" "$feel" "$R")"
+  elif [[ "$feel" -lt 70 ]]; then
+    feel="$(printf '%b%s%b' "$blu" "$feel" "$R")"
+  fi
+  if [[ "$wind" -le 5 ]]; then
+    wind=''
+    windN=''
+  elif [[ "$wind" -gt 15 ]]; then
+    wind="$(printf '%b%s%b' "$red" "$wind" "$R")"
+  elif [[ "$wind" -gt 10 ]]; then
+    wind="$(printf '%b%s%b' "$yel" "$wind" "$R")"
+  fi
 
   date="$(date +'%m-%d')"
   # time should update independently every min
@@ -46,20 +61,17 @@ while :; do
 
   clear
 #  ## 11 LINES 34 COLUMNS to work with
+  # echo '1234567890123456789012345678901234'
   center_txt "$date"
   center_txt "[ ${time} ]"
-  echo '1234567890123456789012345678901234'
-  [[ -z "$temp" ]] && temp_name='' || temp_name='temp'
-  printf '%s\t\t%s\t%s\n' "feel" "$temp_name" " wind"
-  printf '%s\t\t%s\t%s\n' "$feel" "$temp" "$wind"
-  # center_txt "$desc"
+  # use column or pr to evenly space fields?
+  printf '%s\t%s\t%s\t%s\n' "$feelN" "$tempN" " $windN" "$rainN"
+  printf '%s\t%s\t%s\t%s\n' "$feel" "$temp" "$wind" "$rain"
   bash "${dir}/asciis.sh" "$desc"
-  #figlet "$feel"
 
   sleep 360
 done
 
-# cleanup trap
 cleanup() {
   unset LIST vals key val
   for((;i++<9;)){ unset "${keys[$i]}";}
@@ -67,7 +79,3 @@ cleanup() {
 trap 'cleanup' SIGINT EXIT
 
 # evtest for touchscreen events
-    # declare -r -a keys=('icon' 'desc' 'hmdt' 'temp' 'feel' 'wind' 'rain' 'dawn' 'dusk' 'time')
-  # LIST="$(curl -s 'https://wttr.in/CHS?format=%c|%C|%h|%t|%f|%w|%p|%S|%s|%T')"
-      # dawn|dusk|time) declare "$key"="${val:0:5}";; # truncate times to HH:mm
-      # time) declare "$key"="${val:0:5}";; # truncate time to HH:mm
