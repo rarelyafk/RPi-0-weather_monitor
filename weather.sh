@@ -53,7 +53,7 @@ while :; do
   printf '%s\t\t%s\t%s\n' "feel" "$temp_name" " wind"
   printf '%s\t\t%s\t%s\n' "$feel" "$temp" "$wind"
   # center_txt "$desc"
-  "${dir}/asciis.sh" "$desc"
+  bash "${dir}/asciis.sh" "$desc"
   #figlet "$feel"
 
   sleep 360

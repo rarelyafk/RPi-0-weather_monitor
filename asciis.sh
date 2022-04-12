@@ -18,6 +18,14 @@ overcast() {
   printf '%b' "$R"
 }
 
+Clear() {
+  printf '%b%s%b\n' "$Y" "  \   /   " "$R"
+  printf '%b%s%b\n' "$Y" "   .-.    " "$R"
+  printf '%b%s%b\n' "$Y" "― (   ) ― " "$R"
+  printf '%b%s%b\n' "$Y" "   \`-’   " "$R"
+  printf '%b%s%b\n' "$Y" "  /   \   " "$R"
+}
+
 Sunny() {
   printf '%b%s%b\n' "$Y" "  \   /   " "$R"
   printf '%b%s%b\n' "$Y" "   .-.    " "$R"
