@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 
-dir="$(dirname ${BASH_SOURCE[0]})"
+### time should update independently every min
+# date="$(date +'%m-%d')"
+# time="$(date +'%H:%M')"
 
 # line wrap off
 printf '\e[?7l'
@@ -8,76 +10,149 @@ printf '\e[?7l'
 printf '\e[?25l'
 
 # colors
-yel='\e[33m'
-red='\e[31m'
-blu='\e[34m'
-grn='\e[32m'
-R='\e[0m'
+RED='\e[31m'
+GRN='\e[32m'
+YEL='\e[33m'
+BLU='\e[34m'
+WHT='\e[37m'
+RST='\e[0m'
 
-center_txt() { printf '%*s\n' "$(( (34 + "${#1}") / 2))" "$1"; }
-
+###############################################################################
 # infinite loop shorthand
 while :; do
 
-  [[ ! -v keys ]] &&\
-    declare -r -a keys=('desc' 'temp' 'feel' 'wind' 'rain')
-  LIST="$(curl -s 'https://wttr.in/CHS?format=%C|%t|%f|%w|%p')"
-  read -r -a vals <<< "${LIST//'|'/' '}"
-  for i in {0..9}; do
-    declare key="${keys[$i]}" val="${vals[$i]}"
-    case "$key" in
-      feel|temp|wind) declare "$key"=" ${val:1:2}";; # feel/temp/wind to numbers only
-      *) declare "$key"="$val";;
-    esac
-  done
-  unset vals key val
-
-  feelN='feel'
-  tempN='temp'
-  windN='wind'
-  rainN='rain'
-  [[ "$temp" = "$feel" ]] && { temp=''; tempN=''; } || temp="${temp:1}"
-  [[ "$rain" = "0.0mm" ]] && { rain=''; rainN=''; } || rain="${rain}/3hrs"
-
-  # if time < dawn OR > dusk, don't display ascii
-
-  if [[ "$feel" -ge 70 ]] && [[ "$feel" -le 80 ]]; then
-    feel="$(printf '%b%s%b' "$grn" "$feel" "$R")"
-  elif [[ "$feel" -gt 80 ]]; then
-    feel="$(printf '%b%s%b' "$red" "$feel" "$R")"
-  elif [[ "$feel" -lt 70 ]]; then
-    feel="$(printf '%b%s%b' "$blu" "$feel" "$R")"
-  fi
-  if [[ "$wind" -le 5 ]]; then
-    wind=''
-    windN=''
-  elif [[ "$wind" -gt 15 ]]; then
-    wind="$(printf '%b%s%b' "$red" "$wind" "$R")"
-  elif [[ "$wind" -gt 10 ]]; then
-    wind="$(printf '%b%s%b' "$yel" "$wind" "$R")"
-  fi
-
   date="$(date +'%m-%d')"
-  # time should update independently every min
   time="$(date +'%H:%M')"
 
+  LIST="$(curl -s 'https://wttr.in/CHS?format=%C|%t|%f|%w|%p|%D|%d')"
+  sani="$(echo "${LIST}" | sed -e 's/ /_/g')"
+  sani="${sani//|/ }"
+  declare -a vals=($sani) 
+
+  declare -A MAP=(\
+    ['desc']="${vals[0],,}"\
+    ['temp']="${vals[1]:1:2}"\
+    ['feel']="${vals[2]:1:2}"\
+    ['wind']="${vals[3]:1:-3}"\
+    ['rain']="${vals[4]:0:-2}"\
+    ['dawn']="${vals[5]:0:5}"\
+    ['dusk']="${vals[6]:0:5}"\
+  )
+
+
+  # transforms
+
+  # temp
+  [[ "${MAP['temp']}" = "${MAP['feel']}" ]]\
+    && unset MAP['temp']
+
+  # rain
+  [[ "${MAP['rain']}" = "0.0" ]]\
+    && { unset MAP['rain']; }\
+    || { MAP['rain']="${MAP['rain']}mm/3hrs"; }
+
+
+  # color transforms
+
+  center_txt() { printf '%*s\n' "$(( (34 + "${#1}") / 2))" "$1"; }
+  setFG() { printf '%b%s%b' "$2" "$1" "$RST"; }
+
+  # feel
+  if [[ "${MAP['feel']}" -ge 70 ]] && [[ "${MAP['feel']}" -le 80 ]]; then
+    MAP['feel']="$(setFG "${MAP['feel']}" "$GRN")"
+  elif [[ "${MAP['feel']}" -gt 80 ]]; then
+    MAP['feel']="$(setFG "${MAP['feel']}" "$RED")"
+  else
+    MAP['feel']="$(setFG "${MAP['feel']}" "$BLU")"
+  fi
+
+  # wind
+  if [[ "${MAP['wind']}" -le 5 ]]; then
+    unset MAP['wind']
+  elif [[ "${MAP['wind']}" -gt 15 ]]; then
+    MAP['wind']="$(setFG "${MAP['wind']}" "$RED")"
+  else
+    MAP['wind']="$(setFG "${MAP['wind']}" "$YEL")"
+  fi
+
+  # rain
+  if [[ "${MAP['rain']}" < 0.66 ]]; then
+    MAP['rain']="$(setFG "${MAP['rain']}" "$GRN")"
+  elif [[ "${MAP['rain']}" > 0.66 ]] && [[ "${MAP['rain']}" < 1.33 ]]; then
+    MAP['rain']="$(setFG "${MAP['rain']}" "$BLU")"
+  elif [[ "${MAP['rain']}" > 1.33 ]] && [[ "${MAP['rain']}" < 2.66 ]]; then
+    MAP['rain']="$(setFG "${MAP['rain']}" "$YEL")"
+  else
+    MAP['rain']="$(setFG "${MAP['rain']}" "$RED")"
+  fi
+
+
   clear
-#  ## 11 LINES 34 COLUMNS to work with
+# #  ## 11 LINES 34 COLUMNS to work with
   # echo '1234567890123456789012345678901234'
+
+
   center_txt "$date"
   center_txt "[ ${time} ]"
-  # use column or pr to evenly space fields?
-  printf '%s\t%s\t%s\t%s\n' "$feelN" "$tempN" " $windN" "$rainN"
-  printf '%s\t%s\t%s\t%s\n' "$feel" "$temp" "$wind" "$rain"
-  bash "${dir}/asciis.sh" "$desc"
 
+  # use column or pr to evenly space fields?
+
+  # # if time < dawn OR > dusk, don't display ascii
+  echo "desc: ${MAP['desc']}"
+  [[ "$time" > "${MAP['dawn']}" ]] && [[ "$time" < "${MAP['dusk']}" ]] &&\
+    bash "${PWD}/asciis.sh" "${MAP['desc']}"
+
+  echo
+
+  printf '\t%s\t%s\t%s\n' "${MAP['temp']}" "${MAP['wind']}" "${MAP['rain']}"
+  [[ -v "${MAP['rain']}" ]] && printf '%s\n' "${MAP['rain']}"
+  printf '%b%s%b' "$(center_txt "${MAP['feel']}")"
   sleep 360
 done
+###############################################################################
 
 cleanup() {
   unset LIST vals key val
-  for((;i++<9;)){ unset "${keys[$i]}";}
+  # unset condition keys
+  for((;i++<4;)){ unset "${keys[$i]}";}
+  # show cursor
+  printf '\e[?25h'
+  # re-enable linewrapping
+  printf '\e[?7h'
 }
 trap 'cleanup' SIGINT EXIT
 
+###############################################################################
+
 # evtest for touchscreen events
+
+  # declare -A COND
+  #   ['temp']=''\
+  #   ['feel']=''\
+  #   ['wind']=''\
+  #   ['rain']=''\
+  #   ['dawn']=''\
+  #   ['dusk']=''\
+  # )
+
+  # for i in {0..6}; do
+    # echo "key: ${keys[$i]} val: ${vals[$i]}"
+
+  # [[ ! -v keys ]] &&\
+  #   declare -r -a keys=('desc' 'temp' 'feel' 'wind' 'rain' 'dawn' 'dusk')
+
+  # for key in "${!MAP[@]}"; do
+  #   val="${MAP["$key"]}"
+  #   echo "key: $key    val: $val"
+  #   # case "$key" in
+  #   #   dawn|dusk) MAP[$key]="${MAP[$key]:0:5}";;
+  #   #   feel|temp|wind) declare "$key"=" ${val:1:2}";; # feel/temp/wind to numbers only
+  #   #   *) declare "$key"="$val";;
+  #   # esac
+  # done
+  # unset key val
+
+# declare -r DIR="$(dirname ${BASH_SOURCE[0]})"
+# echo "{BASH_SOURCE[0]}"
+# echo "$PWD"
+# echo "${DIR}/asciis.sh"
