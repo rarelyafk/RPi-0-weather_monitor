@@ -7,22 +7,28 @@ Y='\e[38;5;226m'
 R='\e[0m'
 
 declare -r -A CONDITIONS=(\
-  ['Sunny']='sun'\
-  ['Clear']='sun'\
-  ['Overcast']='overcast'\
-  ['Partly Cloudy']='partly_cloudy'\
+  ['sunny']='sun'\
+  ['clear']='sun'\
+  ['overcast']='overcast'\
+  ['partly_cloudy']='partly_cloudy'\
+  ['light_rain']='partly_cloudy'\
 )
+#ascii for light_rain???
 
 center_txt() { printf '%*s\n' "$(( (34 + "${#1}") / 2))" "$1"; }
 # remove escape characters to calculate true length of string
 
+# echo '1234567890123456789012345678901234'
+# 34 cols wide
+# 17 is halfway
+
 # 13 cols?
 sun() {
-  printf '%b%s%b\n' "$Y" "  \   /   " "$R"
-  printf '%b%s%b\n' "$Y" "   .-.    " "$R"
-  printf '%b%s%b\n' "$Y" "― (   ) ― " "$R"
-  printf '%b%s%b\n' "$Y" "   \`-’   " "$R"
-  printf '%b%s%b\n' "$Y" "  /   \   " "$R"
+  printf '%b%s%b\n' "$Y" "              \   /   " "$R"
+  printf '%b%s%b\n' "$Y" "               .-.    " "$R"
+  printf '%b%s%b\n' "$Y" "            ― (   ) ― " "$R"
+  printf '%b%s%b\n' "$Y" "               \`-’   " "$R"
+  printf '%b%s%b\n' "$Y" "              /   \   " "$R"
 }
 
 overcast() {
