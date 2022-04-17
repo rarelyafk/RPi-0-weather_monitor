@@ -54,7 +54,14 @@ while :; do
 
   # color transforms
 
-  center_txt() { printf '%*s\n' "$(( (34 + "${#1}") / 2))" "$1"; }
+  center_txt() {
+    local -r orig_len="${#1}"
+    local -r chars="$(echo "$1" | sed 's/\x1B\[[0-9;]*m//g')"
+    local -r len="${#chars}"
+    local -r diff="$(( $orig_len - $len ))"
+    local -r center="$(( ( (34 + "$len") / 2 ) + "$diff" ))"
+    printf '%*s\n' "$center" "$1"
+  }
   setFG() { printf '%b%s%b' "$2" "$1" "$RST"; }
 
   # feel
@@ -87,26 +94,26 @@ while :; do
   fi
 
 
-  clear
 # #  ## 11 LINES 34 COLUMNS to work with
   # echo '1234567890123456789012345678901234'
+  clear
 
-
+  # date/time
   center_txt "$date"
   center_txt "[ ${time} ]"
 
-  # use column or pr to evenly space fields?
-
-  # # if time < dawn OR > dusk, don't display ascii
-  echo "desc: ${MAP['desc']}"
+  # ascii's
+  center_txt "${MAP['desc']}"
   [[ "$time" > "${MAP['dawn']}" ]] && [[ "$time" < "${MAP['dusk']}" ]] &&\
     bash "${PWD}/asciis.sh" "${MAP['desc']}"
 
   echo
 
-  printf '\t%s\t%s\t%s\n' "${MAP['temp']}" "${MAP['wind']}" "${MAP['rain']}"
+  # use column or pr to evenly space fields?
+  printf '%s\t%s\n' "${MAP['temp']}" "${MAP['wind']}"
   [[ -v "${MAP['rain']}" ]] && printf '%s\n' "${MAP['rain']}"
   printf '%b%s%b' "$(center_txt "${MAP['feel']}")"
+
   sleep 360
 done
 ###############################################################################
@@ -156,3 +163,9 @@ trap 'cleanup' SIGINT EXIT
 # echo "{BASH_SOURCE[0]}"
 # echo "$PWD"
 # echo "${DIR}/asciis.sh"
+
+  # center_txt() {
+  #   local -r chars="$(echo "$1" | sed 's/\x1B\[[0-9;]*m//g')"
+  #   local -r len="${#chars}"
+  #   printf '%*s\n' "$(( (34 + "${len}") / 2))" "$1"
+  # }
