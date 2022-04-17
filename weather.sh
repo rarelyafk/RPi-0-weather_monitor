@@ -10,11 +10,15 @@ printf '\e[?7l'
 printf '\e[?25l'
 
 # colors
+BLK='\e[30m'
 RED='\e[31m'
 GRN='\e[32m'
 YEL='\e[33m'
 BLU='\e[34m'
 WHT='\e[37m'
+GRNB='\e[42m'
+REDB='\e[41m'
+BLUB='\e[44m'
 RST='\e[0m'
 
 ###############################################################################
@@ -55,22 +59,23 @@ while :; do
   # color transforms
 
   center_txt() {
-    local -r orig_len="${#1}"
+    local -r -i orig_len="${#1}"
     local -r chars="$(echo "$1" | sed 's/\x1B\[[0-9;]*m//g')"
-    local -r len="${#chars}"
-    local -r diff="$(( $orig_len - $len ))"
-    local -r center="$(( ( (34 + "$len") / 2 ) + "$diff" ))"
+    local -r -i len="${#chars}"
+    local -r -i diff="$(( $orig_len - $len ))"
+    local -r -i center="$(( ( (34 + "$len") / 2 ) + "$diff" ))"
     printf '%*s\n' "$center" "$1"
   }
   setFG() { printf '%b%s%b' "$2" "$1" "$RST"; }
+  setBG() { printf '%b%b%s%34s%b' "$2" "$BLK" "$(center_txt ${1})" " " "$RST"; }
 
   # feel
   if [[ "${MAP['feel']}" -ge 70 ]] && [[ "${MAP['feel']}" -le 80 ]]; then
-    MAP['feel']="$(setFG "${MAP['feel']}" "$GRN")"
+    MAP['feel']="$(setBG "${MAP['feel']}" "$GRNB")"
   elif [[ "${MAP['feel']}" -gt 80 ]]; then
-    MAP['feel']="$(setFG "${MAP['feel']}" "$RED")"
+    MAP['feel']="$(setBG "${MAP['feel']}" "$REDB")"
   else
-    MAP['feel']="$(setFG "${MAP['feel']}" "$BLU")"
+    MAP['feel']="$(setBG "${MAP['feel']}" "$BLUB")"
   fi
 
   # wind
@@ -104,15 +109,23 @@ while :; do
 
   # ascii's
   center_txt "${MAP['desc']}"
+  # only display ascii if (dawn < time < dusk)
   [[ "$time" > "${MAP['dawn']}" ]] && [[ "$time" < "${MAP['dusk']}" ]] &&\
     bash "${PWD}/asciis.sh" "${MAP['desc']}"
 
-  echo
-
   # use column or pr to evenly space fields?
-  printf '%s\t%s\n' "${MAP['temp']}" "${MAP['wind']}"
-  [[ -v "${MAP['rain']}" ]] && printf '%s\n' "${MAP['rain']}"
-  printf '%b%s%b' "$(center_txt "${MAP['feel']}")"
+
+  [[ -v "${MAP['temp']}" ]]\
+    && temp="temp: ${MAP['temp']}"\
+    || temp=''
+  [[ -v "${MAP['wind']}" ]]\
+    && wind="wind: ${MAP['wind']}"\
+    || wind=''
+  # echo '1234567890123456789012345678901234'
+  printf '%s%34s\n\n' "$temp" "$wind"
+
+  feel="${MAP['feel']}"
+  echo "$feel"
 
   sleep 360
 done
